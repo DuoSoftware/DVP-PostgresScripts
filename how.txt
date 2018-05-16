@@ -1,0 +1,3 @@
+run pgReplication
+run enable (from postgres user)
+run pgPool

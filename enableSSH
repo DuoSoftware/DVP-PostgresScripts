@@ -1,0 +1,7 @@
+#!/bin/bash
+. pgParams.conf
+
+ssh-copy-id $MASTER_HOSTNAME
+ssh-copy-id $SLAVE_HOSTNAME
+exit
+exit

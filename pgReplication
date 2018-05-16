@@ -1,0 +1,151 @@
+#!/bin/bash
+. pgParams.conf
+
+#MASTER_INTERFACE_NAME=eth0
+#MASTER_SERVER_IP=192.168.3.46
+#MASTER_HOSTNAME=temp-dasun11
+#
+#SLAVE_INTERFACE_NAME=eth0
+#SLAVE_SERVER_IP=192.168.3.202
+#SLAVE_HOSTNAME=temp-dasun2
+#
+#DATA_PATH=/var/pgdata
+SERVER_IP=$(ifconfig $MASTER_INTERFACE_NAME | grep "inet " | awk -F'[: ]+' '{ print $4 }')
+#
+#
+#
+setupmasterslave()
+{
+HOSTNAME1=$3
+SERVER_IP=$1
+SVR_1=$5
+HOSTNAME2=$4
+SERVER_IP2=$2
+DATA_PATH=$6
+
+echo "127.0.0.1   localhost" > /etc/hosts
+echo "127.0.0.1   $HOSTNAME1" >> /etc/hosts
+echo "$SERVER_IP   $HOSTNAME1" >> /etc/hosts
+echo "$SERVER_IP2   $HOSTNAME2" >> /etc/hosts
+echo "$HOSTNAME1" > /etc/hostname
+service hostname start
+
+sudo add-apt-repository "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main" 
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+sudo apt-get update 
+sudo apt-get install postgresql-9.6 -y
+sudo apt-get install postgresql-9.6-pgpool2 -y
+mkdir -p $DATA_PATH
+chmod -R 700 $DATA_PATH
+chown postgres:postgres $DATA_PATH
+sed -i "s|^data_directory =.*|data_directory = '$DATA_PATH'|" /etc/postgresql/9.6/main/postgresql.conf 
+#sudo postgres
+#/usr/lib/postgresql/9.6/bin/initdb -D /$DATA_PATH
+su postgres -c "/usr/lib/postgresql/9.6/bin/initdb -D $DATA_PATH"
+echo "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+sudo postgres
+#su postgres -c "echo DuoS123 | passwd --stdin \"postgres\""
+passwd postgres
+#sudo -u postgres psql -U postgres -d postgres -c "alter user postgres with password 'DuoS123';"
+#sudo postgres
+#ssh-keygen
+#ssh-copy-id $HOSTNAME1
+#ssh-copy-id $HOSTNAME2
+#ssh $HOSTNAME1
+#ssh $HOSTNAME2
+pid=$(pidof postgres)
+arr=( $pid )
+cnt=${#arr[@]}
+kill ${arr[$cnt-1]}
+sleep 5
+
+#sed -i '/CLIENTSCRIPT="foo"/a CLIENTSCRIPT2="hello"' file
+sed -i '/# IPv4 local connections:/a host    all             all             0.0.0.0/0            md5' /etc/postgresql/9.6/main/pg_hba.conf
+echo "host    replication     rep     $SERVER_IP2/32   md5" >> /etc/postgresql/9.6/main/pg_hba.conf
+sed -i "s|^#listen_addresses =.*|listen_addresses = '*'|" /etc/postgresql/9.6/main/postgresql.conf
+sed -i "s|^#wal_level =.*|wal_level = hot_standby |" /etc/postgresql/9.6/main/postgresql.conf
+sed -i "s|^#archive_mode =.*|archive_mode = on |" /etc/postgresql/9.6/main/postgresql.conf
+sed -i "s|^#archive_command =.*|archive_command = 'cd .'|" /etc/postgresql/9.6/main/postgresql.conf
+sed -i "s|^#max_wal_senders =.*|max_wal_senders = 2 |" /etc/postgresql/9.6/main/postgresql.conf
+sed -i "s|^#hot_standby =.*|hot_standby = on |" /etc/postgresql/9.6/main/postgresql.conf
+
+
+#--------MAster Server ---------
+if [ $SVR_1 = "master" ];then
+#sudo postgres
+#psql -c "CREATE USER rep REPLICATION LOGIN CONNECTION LIMIT 1 ENCRYPTED PASSWORD 'DuoS123';"
+#psql -c "ALTER USER postgres WITH PASSWORD 'DuoS123';"
+#psql template1 -c "CREATE EXTENSION pgpool_recovery;"
+#su -c "psql -c \"CREATE USER rep REPLICATION LOGIN CONNECTION LIMIT 1 ENCRYPTED PASSWORD 'DuoS123'\"" postgres
+#sleep 3
+#su -c "psql -c \"ALTER USER postgres WITH PASSWORD 'DuoS123'\"" postgres
+#sleep 3
+#su -c "psql template1 -c \"CREATE EXTENSION pgpool_recovery\"" postgres
+#sleep 3
+
+#pid=$(pidof postgres)
+#arr=( $pid )
+#cnt=${#arr[@]}
+#kill ${arr[$cnt-1]}
+#sleep 5
+service postgresql start
+sleep 5
+su -c "psql -c \"CREATE USER rep REPLICATION LOGIN CONNECTION LIMIT 1 ENCRYPTED PASSWORD 'DuoS123'\"" postgres
+sleep 3
+su -c "psql -c \"ALTER USER postgres WITH PASSWORD 'DuoS123'\"" postgres
+sleep 3
+su -c "psql template1 -c \"CREATE EXTENSION pgpool_recovery\"" postgres
+
+#start the replication
+su -c "psql -c \"select pg_start_backup('initial_backup')\"" postgres
+rsync -cva --inplace --exclude=*pg_xlog* $DATA_PATH/ postgres@$SERVER_IP2:$DATA_PATH/
+#su postgres -c "rsync -cva --inplace --exclude=*pg_xlog* /$DATA_PATH/ $SERVER_IP2:/$DATA_PATH/"
+su -c "psql -c \"select pg_stop_backup()\"" postgres
+sleep 5
+ssh root@$HOSTNAME2 service postgresql restart
+else
+
+echo "standby_mode = 'on'" > $DATA_PATH/recovery.conf
+echo "primary_conninfo = 'host=$SERVER_IP2 port=5432 user=rep password=DuoS123'" >> $DATA_PATH/recovery.conf
+echo "trigger_file = '/tmp/postgresql.trigger.5432'" >> $DATA_PATH/recovery.conf
+chmod 777 $DATA_PATH/recovery.conf
+chown postgres:postgres $DATA_PATH/recovery.conf
+sleep 5
+service postgresql start
+echo "ssss"
+fi
+
+##service postgresql restart
+##sudo postgres
+su postgres -c "ssh-keygen"
+chmod 777 /usr/src/*.*
+chown postgres:postgres /usr/src/
+chown postgres:postgres /usr/src/*.*
+su postgres
+#chown postgres:postgres /var/lib/postgresql/.ssh/
+#ssh-copy-id postgres@$HOSTNAME1
+#ssh-copy-id postgres@$HOSTNAME2
+#ssh postgres@$HOSTNAME1
+#ssh postgres@$HOSTNAME2
+#ssh-keygen
+#ssh-copy-id $HOSTNAME1
+#ssh-copy-id $HOSTNAME2
+#ssh $HOSTNAME1
+#ssh $HOSTNAME2
+
+#--------End Master Configurations-----
+
+#--------Slave Server-----------
+
+#--------End Slave Configurations-----
+}
+
+
+if [ $SERVER_IP = $MASTER_SERVER_IP ];then
+SVR=master
+setupmasterslave $MASTER_SERVER_IP $SLAVE_SERVER_IP $MASTER_HOSTNAME $SLAVE_HOSTNAME $SVR $DATA_PATH
+else
+SVR=slave
+setupmasterslave $SLAVE_SERVER_IP $MASTER_SERVER_IP $SLAVE_HOSTNAME $MASTER_HOSTNAME $SVR $DATA_PATH
+fi
+
