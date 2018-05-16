@@ -234,7 +234,7 @@ chmod 777 /etc/pgpool2/pgpool.conf
 #--------Slave Server-----------
 if [ $SVR_1 = "slave" ];then
 #su postgres -c "pcp_attach_node -h $VIRTUALIP -p 9898 -n 1"
-#echo "ssss"
+echo "ssss"
 fi
 #--------End Slave Configurations-----
 }
