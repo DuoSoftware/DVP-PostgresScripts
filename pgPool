@@ -40,7 +40,7 @@ VIRINTERFACE=${array[1]}
 #sudo add-apt-repository "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main" 
 #wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 #sudo apt-get update 
-sudo apt-get install pgpool2 -y
+sudo apt-get install pgpool2@v3.6 -y
 #mkdir -p $DATA_PATH
 #chmod -R 700 $DATA_PATH
 #chown postgres:postgres $DATA_PATH
@@ -120,6 +120,10 @@ sed -i "s|^health_check_database0 =.*|#health_check_database0 = ''|" /etc/pgpool
 sed -i "s|^health_check_max_retries0 =.*|#health_check_max_retries0 = 0|" /etc/pgpool2/pgpool.conf
 sed -i "s|^health_check_retry_delay0 =.*|#health_check_retry_delay0 = 1|" /etc/pgpool2/pgpool.conf
 sed -i "s|^connect_timeout0 =.*|#connect_timeout0 = 10000|" /etc/pgpool2/pgpool.conf
+
+
+su postgres -c 'echo "*:*:postgres:DuoS123" > ~/.pcppass'
+su postgres -c 'chmod 0600 ~/.pcppass'
 
 #--------MAster Server ---------
 if [ $SVR_1 = "master" ];then
@@ -230,7 +234,6 @@ service apache2 restart
 chmod 0600 /var/www/.pcppass
 chown www-data:www-data /var/www/.pcppass
 
-
 chmod -R 777 /var/www/html/pgpoolAdmin-3.7.0
 chmod 777 /etc/pgpool2/pcp.conf
 chmod 777 /etc/pgpool2/pgpool.conf
@@ -241,7 +244,7 @@ chmod 777 /etc/pgpool2/pgpool.conf
 
 #--------Slave Server-----------
 if [ $SVR_1 = "slave" ];then
-#su postgres -c "pcp_attach_node -h $VIRTUALIP -p 9898 -n 1"
+#su postgres -c "pcp_attach_node -h $VIRTUALIP -p 9898 -w -n 1"
 echo "ssss"
 fi
 #--------End Slave Configurations-----
