@@ -226,36 +226,35 @@ echo "standby_mode = 'on'" >> $DATA_PATH/recovery_1st_stage
 echo "primary_conninfo = 'host="\$HOSTNAME" port=\$PORT user=rep password=DuoS123'" >> $DATA_PATH/recovery_1st_stage
 echo "trigger_file = '/tmp/postgresql.trigger.5432'" >> $DATA_PATH/recovery_1st_stage
 echo "EOT\"" >> $DATA_PATH/recovery_1st_stage
-echo "ssh -T postgres@$REMOTE_HOST \"service postgresql start >/dev/null\" ">> $DATA_PATH/recovery_1st_stage
 echo "sleep 5" >> $DATA_PATH/recovery_1st_stage
 
 if [ $SVR_1 = "slave" ];then
-echo "val=\$(ssh -T postgres@MASTER_HOSTNAME \"ps -ef | grep -v grep | grep postgresql | wc -l\")"  >> $DATA_PATH/recovery_1st_stage
+echo "val=\$(ssh -T postgres@$MASTER_HOSTNAME \"ps -ef | grep -v grep | grep postgresql | wc -l\")"  >> $DATA_PATH/recovery_1st_stage
 echo "if [ \$val == 0 ];" >> $DATA_PATH/recovery_1st_stage
 echo "then" >> $DATA_PATH/recovery_1st_stage
-echo "ssh -T postgres@MASTER_HOSTNAME \"service postgresql start\"" >> $DATA_PATH/recovery_1st_stage
+echo "ssh -T postgres@$MASTER_HOSTNAME \"service postgresql start\"" >> $DATA_PATH/recovery_1st_stage
 echo "fi" >> $DATA_PATH/recovery_1st_stage
 echo "sleep 5" >> $DATA_PATH/recovery_1st_stage
 
-echo "val=\$(ssh -T postgres@MASTER_HOSTNAME \"ps -ef | grep -v grep | grep postgresql | wc -l\")"  >> $DATA_PATH/recovery_1st_stage
+echo "val=\$(ssh -T postgres@$MASTER_HOSTNAME \"ps -ef | grep -v grep | grep postgresql | wc -l\")"  >> $DATA_PATH/recovery_1st_stage
 echo "if [ \$val > 0 ];" >> $DATA_PATH/recovery_1st_stage
 echo "then" >> $DATA_PATH/recovery_1st_stage
-echo "ssh -T postgres@MASTER_HOSTNAME \"pcp_attach_node -h $VIRTUALIP -p 9898 -w -n 0\"" >> $DATA_PATH/recovery_1st_stage
+echo "ssh -T postgres@$MASTER_HOSTNAME \"pcp_attach_node -h $VIRTUALIP -p 9898 -w -n 0\"" >> $DATA_PATH/recovery_1st_stage
 echo "fi" >> $DATA_PATH/recovery_1st_stage
 
 else
 
-echo "val=\$(ssh -T postgres@SLAVE_HOSTNAME \"ps -ef | grep -v grep | grep postgresql | wc -l\")"  >> $DATA_PATH/recovery_1st_stage
+echo "val=\$(ssh -T postgres@$SLAVE_HOSTNAME \"ps -ef | grep -v grep | grep postgresql | wc -l\")"  >> $DATA_PATH/recovery_1st_stage
 echo "if [ \$val == 0 ];" >> $DATA_PATH/recovery_1st_stage
 echo "then" >> $DATA_PATH/recovery_1st_stage
-echo "ssh -T postgres@SLAVE_HOSTNAME \"service postgresql start\"" >> $DATA_PATH/recovery_1st_stage
+echo "ssh -T postgres@$SLAVE_HOSTNAME \"service postgresql start\"" >> $DATA_PATH/recovery_1st_stage
 echo "fi" >> $DATA_PATH/recovery_1st_stage
 echo "sleep 5" >> $DATA_PATH/recovery_1st_stage
 
-echo "val=\$(ssh -T postgres@SLAVE_HOSTNAME \"ps -ef | grep -v grep | grep postgresql | wc -l\")"  >> $DATA_PATH/recovery_1st_stage
+echo "val=\$(ssh -T postgres@$SLAVE_HOSTNAME \"ps -ef | grep -v grep | grep postgresql | wc -l\")"  >> $DATA_PATH/recovery_1st_stage
 echo "if [ \$val > 0 ];" >> $DATA_PATH/recovery_1st_stage
 echo "then" >> $DATA_PATH/recovery_1st_stage
-echo "ssh -T postgres@SLAVE_HOSTNAME \"pcp_attach_node -h $VIRTUALIP -p 9898 -w -n 1\"" >> $DATA_PATH/recovery_1st_stage
+echo "ssh -T postgres@$SLAVE_HOSTNAME \"pcp_attach_node -h $VIRTUALIP -p 9898 -w -n 1\"" >> $DATA_PATH/recovery_1st_stage
 echo "fi" >> $DATA_PATH/recovery_1st_stage
 
 fi
