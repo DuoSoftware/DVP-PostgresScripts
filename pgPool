@@ -57,11 +57,11 @@ cp pgpool.conf.sample pgpool.conf
 cp -r /etc/pgpool2/* .
 
 
-mkdir /var/log/pgpool
-chmod -R 777 /var/log/pgpool
-mkdir /var/run/pgpool
-chown postgres:postgres /var/run/pgpool
-chmod -R 777 /var/run/pgpool
+# mkdir /var/log/pgpool
+# chmod -R 777 /var/log/pgpool
+# mkdir /var/run/pgpool
+# chown postgres:postgres /var/run/pgpool
+# chmod -R 777 /var/run/pgpool
 # cd $path
 # cp 
 #mkdir -p $DATA_PATH
@@ -138,6 +138,7 @@ sed -i "s|^arping_path =.*|arping_path = '$(dirname $(locate arping))'|" /usr/lo
 sed -i "s|^arping_cmd =.*|arping_cmd = 'arping -U \$_IP_$ -w 1'|" /usr/local/etc/pgpool.conf
 sed -i "s|^#other_pgpool_port0 =.*|other_pgpool_port0 = 5433|" /usr/local/etc/pgpool.conf
 sed -i "s|^#other_wd_port0 =.*|other_wd_port0 = 9000|" /usr/local/etc/pgpool.conf
+sed -i "s|^#pid_file_name = .*|pid_file_name ='/var/run/postgresql/pgpool.pid'|" /usr/local/etc/pgpool.conf
 
 su postgres -c 'echo "*:*:postgres:DuoS123" > ~/.pcppass'
 su postgres -c 'chmod 0600 ~/.pcppass'
