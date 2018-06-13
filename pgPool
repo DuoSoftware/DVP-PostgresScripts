@@ -214,6 +214,20 @@ echo "PGDATA=\$1" >> $DATA_PATH/recovery_1st_stage
 echo "REMOTE_HOST=\$2" >> $DATA_PATH/recovery_1st_stage
 echo "REMOTE_PGDATA=\$3" >> $DATA_PATH/recovery_1st_stage
 echo "PORT=5432" >> $DATA_PATH/recovery_1st_stage
+
+echo "MASTER_HOSTNAME=$MASTER_HOSTNAME" >> $DATA_PATH/recovery_1st_stage
+echo "SLAVE_HOSTNAME=$SLAVE_HOSTNAME" >> $DATA_PATH/recovery_1st_stage
+echo "DATA_PATH=$DATA_PATH" >> $DATA_PATH/recovery_1st_stage
+echo "PGDATA=\$DATA_PATH" >> $DATA_PATH/recovery_1st_stage
+echo "REMOTE_PGDATA=\$DATA_PATH">> $DATA_PATH/recovery_1st_stage
+echo "HOST=\$(hostname)" >> $DATA_PATH/recovery_1st_stage
+echo "if [ \$HOST ==\$MASTER_HOSTNAME ];then" >> $DATA_PATH/recovery_1st_stage
+echo "REMOTE_HOST=\$SLAVE_HOSTNAME" >> $DATA_PATH/recovery_1st_stage
+echo "else" >> $DATA_PATH/recovery_1st_stage
+echo "REMOTE_HOST=\$MASTER_HOSTNAME" >> $DATA_PATH/recovery_1st_stage
+echo "fi" >> $DATA_PATH/recovery_1st_stage
+
+
 echo "ssh -T postgres@\$REMOTE_HOST \"service postgresql stop\"" >> $DATA_PATH/recovery_1st_stage
 #echo "ssh -T root@\$REMOTE_HOST \"service postgresql stop\"" >> $DATA_PATH/recovery_1st_stage
 echo "psql -c \"select pg_start_backup('initial_backup');\"" >> $DATA_PATH/recovery_1st_stage
