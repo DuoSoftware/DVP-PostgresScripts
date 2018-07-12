@@ -221,7 +221,7 @@ echo "DATA_PATH=$DATA_PATH" >> $DATA_PATH/recovery_1st_stage
 echo "PGDATA=\$DATA_PATH" >> $DATA_PATH/recovery_1st_stage
 echo "REMOTE_PGDATA=\$DATA_PATH">> $DATA_PATH/recovery_1st_stage
 echo "HOST=\$(hostname)" >> $DATA_PATH/recovery_1st_stage
-echo "if [ \$HOST ==\$MASTER_HOSTNAME ];then" >> $DATA_PATH/recovery_1st_stage
+echo "if [ \"\$HOST\" == \"\$MASTER_HOSTNAME\" ];then" >> $DATA_PATH/recovery_1st_stage
 echo "REMOTE_HOST=\$SLAVE_HOSTNAME" >> $DATA_PATH/recovery_1st_stage
 echo "else" >> $DATA_PATH/recovery_1st_stage
 echo "REMOTE_HOST=\$MASTER_HOSTNAME" >> $DATA_PATH/recovery_1st_stage
