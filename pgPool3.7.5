@@ -1,0 +1,337 @@
+#!/bin/bash
+. pgParams.conf
+SERVER_IP=$(ifconfig $MASTER_INTERFACE_NAME | grep "inet " | awk -F'[: ]+' '{ print $4 }')
+
+setupmasterslave()
+{
+IFS='-' read -r -a array <<< $9
+HOSTNAME1=$3
+SERVER_IP=$1
+SVR_1=$5
+HOSTNAME2=$4
+SERVER_IP2=$2
+DATA_PATH=$6
+MASTER_NODE=$7
+SLAVE_NODE=$8
+VIRTUALIP=${array[0]}
+VIRINTERFACE=${array[1]}
+
+#echo "127.0.0.1   localhost" > /etc/hosts
+#echo "127.0.0.1   $HOSTNAME1" >> /etc/hosts
+#echo "$SERVER_IP   $HOSTNAME1" >> /etc/hosts
+#echo "$SERVER_IP2   $HOSTNAME2" >> /etc/hosts
+#echo "$HOSTNAME1" > /etc/hostname
+#service hostname start
+
+sudo add-apt-repository "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main" 
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+sudo apt-get update 
+sudo apt-get install pgpool2 -y
+
+path=$(pwd)
+# apt-get install curl build-essential gcc libpq-dev make -y
+# curl -L -o pgpool-II-3.7.3.tar.gz http://www.pgpool.net/download.php?f=pgpool-II-3.7.3.tar.gz
+# tar zxvf pgpool-II-3.7.3.tar.gz
+# cd pgpool-II-3.7.3/
+# ./configure
+# make
+# make install
+# cd src/sql/
+# make
+# make install
+cd /etc/pgpool2
+# cp pgpool.conf.sample pgpool.conf
+# cp -r /etc/pgpool2/* .
+
+
+# mkdir /var/log/pgpool
+# chmod -R 777 /var/log/pgpool
+# mkdir /var/run/pgpool
+# chown postgres:postgres /var/run/pgpool
+# chmod -R 777 /var/run/pgpool
+# cd $path
+# cp 
+#mkdir -p $DATA_PATH
+#chmod -R 700 $DATA_PATH
+#chown postgres:postgres $DATA_PATH
+#sed -i "s|^data_directory =.*|data_directory = '$DATA_PATH'|" /etc/postgresql/9.6/main/postgresql.conf 
+#sudo postgres
+#/usr/lib/postgresql/9.6/bin/initdb -D /$DATA_PATH
+#su postgres -c "/usr/lib/postgresql/9.6/bin/initdb -D $DATA_PATH"
+echo "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+#sudo postgres
+#su postgres -c "echo DuoS123 | passwd --stdin \"postgres\""
+#passwd postgres
+#sudo -u postgres psql -U postgres -d postgres -c "alter user postgres with password 'DuoS123';"
+#sudo postgres
+#ssh-keygen
+#ssh-copy-id $HOSTNAME1
+#ssh-copy-id $HOSTNAME2
+#ssh $HOSTNAME1
+#ssh $HOSTNAME2
+#pid=$(pidof postgres)
+#arr=( $pid )
+#cnt=${#arr[@]}
+#kill ${arr[$cnt-1]}
+sleep 5
+SUBNET=$(ifconfig $MASTER_INTERFACE_NAME | grep "inet " | awk -F'[: ]+' '{ print $8 }')
+
+#sed -i '/CLIENTSCRIPT="foo"/a CLIENTSCRIPT2="hello"' file
+cp pool_hba.conf.sample pool_hba.conf
+sed -i '/# IPv4 local connections:/a host    all             all             0.0.0.0/0            md5' /etc/pgpool2/pool_hba.conf
+#echo "host    replication     rep     $SERVER_IP2/32   md5" >> /etc/postgresql/9.6/main/pg_hba.conf
+
+
+sed -i "s|^listen_addresses =.*|listen_addresses = '*'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^port =.*|port = 5433|" /etc/pgpool2/pgpool.conf
+sed -i "s|^backend_hostname0 =.*|backend_hostname0 = '$MASTER_NODE'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^#backend_port0 =.*|backend_port0 = 5432|" /etc/pgpool2/pgpool.conf
+sed -i "s|^#backend_weight0 = 1|backend_weight0 = 1|" /etc/pgpool2/pgpool.conf
+sed -i "s|^backend_data_directory0 =.*|backend_data_directory0 = '$DATA_PATH'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^#backend_flag0 = 'ALLOW_TO_FAILOVER'|backend_flag0 = 'ALLOW_TO_FAILOVER'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^#backend_hostname1 =.*|backend_hostname1 = '$SLAVE_NODE'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^#backend_port1 =.*|backend_port1 = 5432|" /etc/pgpool2/pgpool.conf
+sed -i "s|^#backend_weight1 = 1|backend_weight1 = 1|" /etc/pgpool2/pgpool.conf
+sed -i "s|^#backend_data_directory1 =.*|backend_data_directory1 = '$DATA_PATH'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^#backend_flag1 = 'ALLOW_TO_FAILOVER'|backend_flag1 = 'ALLOW_TO_FAILOVER'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^enable_pool_hba = .*|enable_pool_hba = on|" /etc/pgpool2/pgpool.conf
+sed -i "s|^log_destination =.*|log_destination = 'syslog'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^load_balance_mode = .*|load_balance_mode = on|" /etc/pgpool2/pgpool.conf
+sed -i "s|^master_slave_mode =.*|master_slave_mode = on|" /etc/pgpool2/pgpool.conf
+sed -i "s|^master_slave_sub_mode =.*|master_slave_sub_mode ='stream'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^sr_check_user =.*|sr_check_user = 'postgres'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^sr_check_password =.*|sr_check_password = 'DuoS123'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^sr_check_period =.*|sr_check_period = 5|" /etc/pgpool2/pgpool.conf
+sed -i "s|^delay_threshold =.*|delay_threshold = 10|" /etc/pgpool2/pgpool.conf
+sed -i "s|^socket_dir =.*|socket_dir = '/var/run/postgresql'|" /etc/pgpool2/pgpool.conf
+#
+sed -i "s|^health_check_period =.*|health_check_period = 5|" /etc/pgpool2/pgpool.conf
+sed -i "s|^health_check_user =.*|health_check_user = 'postgres'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^health_check_password =.*|health_check_password = 'DuoS123'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^health_check_database =.*|health_check_database = 'postgres'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^health_check_max_retries =.*|health_check_max_retries = 3|" /etc/pgpool2/pgpool.conf
+sed -i "s|^failover_command =.*|failover_command = '/etc/pgpool2/failover.sh %d %P %H %R'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^recovery_user =.*|recovery_user = 'postgres'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^recovery_password =.*|recovery_password = 'DuoS123'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^recovery_1st_stage_command =.*|recovery_1st_stage_command = 'recovery_1st_stage'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^use_watchdog =.*|use_watchdog = on|" /etc/pgpool2/pgpool.conf
+#sed -i "s|^wd_hostname =.*|wd_hostname = '$SLAVE_NODE'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^delegate_IP =.*|delegate_IP = '$VIRTUALIP'|" /etc/pgpool2/pgpool.conf
+#if_cmd_path = '/sbin'
+sed -i "s|^if_up_cmd =.*|if_up_cmd = 'ifconfig $VIRINTERFACE inet \$_IP_$ netmask $SUBNET'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^if_down_cmd =.*|if_down_cmd = 'ifconfig $VIRINTERFACE down'|" /etc/pgpool2/pgpool.conf
+###arping_path = '/usr/share/bash-completion/completions' 
+sed -i "s|^arping_path =.*|arping_path = '$(dirname $(locate arping))'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^arping_cmd =.*|arping_cmd = 'arping -U \$_IP_$ -w 1'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^#other_pgpool_port0 =.*|other_pgpool_port0 = 5433|" /etc/pgpool2/pgpool.conf
+sed -i "s|^#other_wd_port0 =.*|other_wd_port0 = 9000|" /etc/pgpool2/pgpool.conf
+sed -i "s|^#pid_file_name = .*|pid_file_name ='/var/run/postgresql/pgpool.pid'|" /etc/pgpool2/pgpool.conf
+
+su postgres -c 'echo "*:*:postgres:DuoS123" > ~/.pcppass'
+su postgres -c 'chmod 0600 ~/.pcppass'
+
+#--------MAster Server ---------
+
+
+if [ $SVR_1 = "master" ];then
+
+sed -i "s|^wd_hostname =.*|wd_hostname = '$MASTER_NODE'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^heartbeat_destination0 =.*|heartbeat_destination0 = '$SLAVE_NODE'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^#other_pgpool_hostname0 =.*|other_pgpool_hostname0 = '$SLAVE_NODE'|" /etc/pgpool2/pgpool.conf
+
+else
+
+sed -i "s|^wd_hostname =.*|wd_hostname = '$SLAVE_NODE'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^heartbeat_destination0 =.*|heartbeat_destination0 = '$MASTER_NODE'|" /etc/pgpool2/pgpool.conf
+sed -i "s|^#other_pgpool_hostname0 =.*|other_pgpool_hostname0 = '$MASTER_NODE'|" /etc/pgpool2/pgpool.conf
+su postgres -c "pcp_attach_node -h $VIRTUALIP -p 9898 -w -n 1"
+echo "ssss"
+fi
+
+chmod 4755 /sbin/ifconfig
+chmod 4755 /usr/share/bash-completion/completions/arping
+
+sleep 5
+pg_md5 --md5auth --username=postgres DuoS123
+sleep 2
+echo "Please Enter the postgres UNIX password"
+su postgres -c "pg_md5 -p"
+#read NAME1
+echo "\n"
+printf "PLEASE ENTER THE ABOVE MENTIONED KEY :"
+read enpass
+echo postgres:$enpass >> /etc/pgpool2/pcp.conf
+#service postgresql restart
+
+echo "#!/bin/bash -x" > /etc/pgpool2/failover.sh
+echo "FALLING_NODE=\$1         # %d" >> /etc/pgpool2/failover.sh
+echo "OLDPRIMARY_NODE=\$2      # %P" >> /etc/pgpool2/failover.sh
+echo "NEW_PRIMARY=\$3          # %H" >> /etc/pgpool2/failover.sh
+echo "PGDATA=\$4               # %R" >> /etc/pgpool2/failover.sh
+echo "if [ \$FALLING_NODE = \$OLDPRIMARY_NODE ]; then" >> /etc/pgpool2/failover.sh
+echo -e "\tif [ \$UID -eq 0 ]" >> /etc/pgpool2/failover.sh
+echo -e "\tthen" >> /etc/pgpool2/failover.sh
+echo -e "\t\tsu postgres -c \"ssh -T postgres@\$NEW_PRIMARY touch /tmp/postgresql.trigger.5432\"" >> /etc/pgpool2/failover.sh
+#echo -e "\t\tsu postgres -c \"ssh -T root@\$NEW_PRIMARY touch /tmp/postgresql.trigger.5432\"" >> /etc/pgpool2/failover.sh
+echo -e "\telse" >> /etc/pgpool2/failover.sh
+echo -e "\t\tssh -T postgres@\$NEW_PRIMARY touch /tmp/postgresql.trigger.5432" >> /etc/pgpool2/failover.sh
+#echo -e "\t\tssh -T root@\$NEW_PRIMARY touch /tmp/postgresql.trigger.5432" >> /etc/pgpool2/failover.sh
+echo -e "\tfi" >> /etc/pgpool2/failover.sh
+echo -e "\texit 0;" >> /etc/pgpool2/failover.sh
+echo "else" >> /etc/pgpool2/failover.sh
+echo -e "\tif [ \$UID -eq 0 ]" >> /etc/pgpool2/failover.sh
+echo -e "\tthen" >> /etc/pgpool2/failover.sh
+echo -e "\t\tsu postgres -c \"ssh -T postgres@\$NEW_PRIMARY touch /tmp/postgresql.trigger.5432\"" >> /etc/pgpool2/failover.sh
+#echo -e "\t\tsu postgres -c \"ssh -T root@\$NEW_PRIMARY touch /tmp/postgresql.trigger.5432\"" >> /etc/pgpool2/failover.sh
+echo -e "\telse" >> /etc/pgpool2/failover.sh
+echo -e "\t\tssh -T postgres@\$NEW_PRIMARY touch /tmp/postgresql.trigger.5432" >> /etc/pgpool2/failover.sh
+#echo -e "\t\tssh -T root@\$NEW_PRIMARY touch /tmp/postgresql.trigger.5432" >> /etc/pgpool2/failover.sh
+echo -e "\tfi" >> /etc/pgpool2/failover.sh
+echo -e "\texit 0;" >> /etc/pgpool2/failover.sh
+echo "fi;" >> /etc/pgpool2/failover.sh
+echo "exit 0;" >> /etc/pgpool2/failover.sh
+
+chmod 777 /etc/pgpool2/failover.sh
+chown postgres:postgres /etc/pgpool2/failover.sh
+
+
+#Create recovery_1st_stage configurations on both servers
+echo "#!/bin/bash -x" > $DATA_PATH/recovery_1st_stage
+echo "PGDATA=\$1" >> $DATA_PATH/recovery_1st_stage
+echo "REMOTE_HOST=\$2" >> $DATA_PATH/recovery_1st_stage
+echo "REMOTE_PGDATA=\$3" >> $DATA_PATH/recovery_1st_stage
+echo "PORT=5432" >> $DATA_PATH/recovery_1st_stage
+
+echo "MASTER_HOSTNAME=$MASTER_HOSTNAME" >> $DATA_PATH/recovery_1st_stage
+echo "SLAVE_HOSTNAME=$SLAVE_HOSTNAME" >> $DATA_PATH/recovery_1st_stage
+echo "DATA_PATH=$DATA_PATH" >> $DATA_PATH/recovery_1st_stage
+echo "PGDATA=\$DATA_PATH" >> $DATA_PATH/recovery_1st_stage
+echo "REMOTE_PGDATA=\$DATA_PATH">> $DATA_PATH/recovery_1st_stage
+echo "HOST=\$(hostname)" >> $DATA_PATH/recovery_1st_stage
+echo "if [ \"\$HOST\" == \"\$MASTER_HOSTNAME\" ];then" >> $DATA_PATH/recovery_1st_stage
+echo "REMOTE_HOST=\$SLAVE_HOSTNAME" >> $DATA_PATH/recovery_1st_stage
+echo "else" >> $DATA_PATH/recovery_1st_stage
+echo "REMOTE_HOST=\$MASTER_HOSTNAME" >> $DATA_PATH/recovery_1st_stage
+echo "fi" >> $DATA_PATH/recovery_1st_stage
+
+
+echo "ssh -T postgres@\$REMOTE_HOST \"service postgresql stop\"" >> $DATA_PATH/recovery_1st_stage
+#echo "ssh -T root@\$REMOTE_HOST \"service postgresql stop\"" >> $DATA_PATH/recovery_1st_stage
+echo "psql -c \"select pg_start_backup('initial_backup');\"" >> $DATA_PATH/recovery_1st_stage
+echo "rsync -cva --inplace --exclude=*pg_xlog* --exclude='recover*'   \$PGDATA \$REMOTE_HOST:${DATA_PATH%/*}/" >> $DATA_PATH/recovery_1st_stage
+echo "psql -c \"select pg_stop_backup();\"" >> $DATA_PATH/recovery_1st_stage
+echo "ssh -T postgres@\$REMOTE_HOST \"" >> $DATA_PATH/recovery_1st_stage
+#echo "ssh -T root@\$REMOTE_HOST \"" >> $DATA_PATH/recovery_1st_stage
+echo "cd \$REMOTE_PGDATA;" >> $DATA_PATH/recovery_1st_stage
+echo "cat > recovery.conf << EOT" >> $DATA_PATH/recovery_1st_stage
+echo "standby_mode = 'on'" >> $DATA_PATH/recovery_1st_stage
+echo "primary_conninfo = 'host="\$HOSTNAME" port=\$PORT user=rep password=DuoS123'" >> $DATA_PATH/recovery_1st_stage
+echo "trigger_file = '/tmp/postgresql.trigger.5432'" >> $DATA_PATH/recovery_1st_stage
+echo "EOT\"" >> $DATA_PATH/recovery_1st_stage
+echo "sleep 5" >> $DATA_PATH/recovery_1st_stage
+
+if [ $SVR_1 = "slave" ];then
+echo "val=\$(ssh -T postgres@$MASTER_HOSTNAME \"ps -ef | grep -v grep | grep postgresql | wc -l\")"  >> $DATA_PATH/recovery_1st_stage
+echo "if [ \$val == 0 ];" >> $DATA_PATH/recovery_1st_stage
+echo "then" >> $DATA_PATH/recovery_1st_stage
+echo "ssh -T postgres@$MASTER_HOSTNAME \"service postgresql start\"" >> $DATA_PATH/recovery_1st_stage
+echo "fi" >> $DATA_PATH/recovery_1st_stage
+echo "sleep 5" >> $DATA_PATH/recovery_1st_stage
+
+echo "val=\$(ssh -T postgres@$MASTER_HOSTNAME \"ps -ef | grep -v grep | grep postgresql | wc -l\")"  >> $DATA_PATH/recovery_1st_stage
+echo "if [ \$val > 0 ];" >> $DATA_PATH/recovery_1st_stage
+echo "then" >> $DATA_PATH/recovery_1st_stage
+echo "ssh -T postgres@$MASTER_HOSTNAME \"pcp_attach_node -h $VIRTUALIP -p 9898 -w -n 0\"" >> $DATA_PATH/recovery_1st_stage
+echo "fi" >> $DATA_PATH/recovery_1st_stage
+
+else
+
+echo "val=\$(ssh -T postgres@$SLAVE_HOSTNAME \"ps -ef | grep -v grep | grep postgresql | wc -l\")"  >> $DATA_PATH/recovery_1st_stage
+echo "if [ \$val == 0 ];" >> $DATA_PATH/recovery_1st_stage
+echo "then" >> $DATA_PATH/recovery_1st_stage
+echo "ssh -T postgres@$SLAVE_HOSTNAME \"service postgresql start\"" >> $DATA_PATH/recovery_1st_stage
+echo "fi" >> $DATA_PATH/recovery_1st_stage
+echo "sleep 5" >> $DATA_PATH/recovery_1st_stage
+
+echo "val=\$(ssh -T postgres@$SLAVE_HOSTNAME \"ps -ef | grep -v grep | grep postgresql | wc -l\")"  >> $DATA_PATH/recovery_1st_stage
+echo "if [ \$val > 0 ];" >> $DATA_PATH/recovery_1st_stage
+echo "then" >> $DATA_PATH/recovery_1st_stage
+echo "ssh -T postgres@$SLAVE_HOSTNAME \"pcp_attach_node -h $VIRTUALIP -p 9898 -w -n 1\"" >> $DATA_PATH/recovery_1st_stage
+echo "fi" >> $DATA_PATH/recovery_1st_stage
+
+fi
+
+
+chmod 777 $DATA_PATH/recovery_1st_stage
+chown postgres:postgres $DATA_PATH/recovery_1st_stage
+
+#Create pgpool_remote_start configurations on both servers
+
+echo "#!/bin/sh" > $DATA_PATH/pgpool_remote_start
+echo "REMOTE_HOST=\$1" >> $DATA_PATH/pgpool_remote_start
+echo "REMOTE_PGDATA=\$2" >> $DATA_PATH/pgpool_remote_start
+echo "ssh -T postgres@\$REMOTE_HOST \"service postgresql start >/dev/null\"" >> $DATA_PATH/pgpool_remote_start
+#echo "ssh -T root@\$REMOTE_HOST \"service postgresql start >/dev/null\"" >> $DATA_PATH/pgpool_remote_start
+
+chmod 755 $DATA_PATH/pgpool_remote_start
+chown postgres:postgres $DATA_PATH/pgpool_remote_start
+
+# #start pgpool2
+# service postgresql restart
+# #start pgpool2
+# service pgpool2 restart
+
+#install PgPoolAdmin on both server
+apt-get install apache2 -y
+rm /var/www/html/index.html
+cd /var/www/html
+wget http://www.pgpool.net/mediawiki/images/pgpoolAdmin-3.7.0.tar.gz 
+tar -xvf pgpoolAdmin-3.7.0.tar.gz
+sudo add-apt-repository ppa:ondrej/php
+apt-get update
+sudo apt-get install php5.6 -y
+apt-get install php5.6-pgsql -y
+
+echo "*:*:postgres:DuoS123" > /var/www/.pcppass
+
+service apache2 restart
+chmod 0600 /var/www/.pcppass
+chown www-data:www-data /var/www/.pcppass
+
+
+chmod -R 777 /var/www/html/pgpoolAdmin-3.7.0
+chmod 777 /etc/pgpool2/pcp.conf
+chmod 777 /etc/pgpool2/pgpool.conf
+
+
+
+su postgres
+service postgresql stop 
+sleep 10
+service postgresql start
+pgpool -D
+
+
+
+
+#--------End Master Configurations-----
+
+#--------Slave Server-----------
+if [ $SVR_1 = "slave" ];then
+su postgres -c "pcp_attach_node -h $VIRTUALIP -p 9898 -w -n 1"
+#echo "ssss"
+fi
+#--------End Slave Configurations-----
+}
+
+
+if [ $SERVER_IP = $MASTER_SERVER_IP ];then
+SVR=master
+setupmasterslave $MASTER_SERVER_IP $SLAVE_SERVER_IP $MASTER_HOSTNAME $SLAVE_HOSTNAME $SVR $DATA_PATH $MASTER_HOSTNAME $SLAVE_HOSTNAME $VIRTUALIP-$VIRINTERFACE
+else
+SVR=slave
+setupmasterslave $SLAVE_SERVER_IP $MASTER_SERVER_IP $SLAVE_HOSTNAME $MASTER_HOSTNAME $SVR $DATA_PATH $MASTER_HOSTNAME $SLAVE_HOSTNAME $VIRTUALIP-$VIRINTERFACE
+fi
+
+
+
